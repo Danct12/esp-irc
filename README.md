@@ -7,7 +7,7 @@ A small, easy to use IRC (Internet Relay Chat) library for ESP-IDF.
 - Receive parsed IRC message through event loop
 
 ## Usage
-Coming soon
+See [examples](./examples).
 
 ## License
 Due to ESP-IDF being licensed under Apache-2.0, this library is GPL-3.0-only.
