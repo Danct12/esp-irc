@@ -352,7 +352,7 @@ esp_err_t irc_connect(irc_handle_t client)
         return ESP_FAIL;
     }
 
-    irc_sendraw(client, "USER %s 0 0 :%s", client->config.user, client->config.realname);
+    irc_sendraw(client, "USER %s 0 * :%s", client->config.user, client->config.realname);
     irc_sendraw(client, "NICK %s", client->config.nick);
     return ESP_OK;
 
