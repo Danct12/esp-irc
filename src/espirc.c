@@ -343,14 +343,11 @@ esp_err_t irc_connect(irc_handle_t client)
 
     ESP_LOGD(TAG, "Socket: %d", client->socket);
 
-    client->running = true;
-
     irc_state_set(client, IRC_STATE_CONNECTING);
 
     if (xTaskCreate(irc_task, "irc_task", client->config.task_stack_size, client,
             client->config.task_priority, &client->task_handle) != pdTRUE) {
         ESP_LOGE(TAG, "Failed to create task");
-        client->running = false;
         return ESP_FAIL;
     }
 
@@ -382,8 +379,6 @@ esp_err_t irc_disconnect(irc_handle_t client)
         ESP_LOGE(TAG, "Not connected to IRC");
         return ESP_FAIL;
     }
-
-    client->running = false;
 
     return ESP_OK;
 }
