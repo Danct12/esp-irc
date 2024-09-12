@@ -8,6 +8,10 @@
 
 #include "esp_event.h"
 
+#ifdef CONFIG_ESPIRC_SUPPORT_TLS
+#include "esp_tls.h"
+#endif
+
 typedef enum {
     IRC_STATE_ERROR = -2,
     IRC_STATE_DISCONNECTED = -1,
@@ -53,6 +57,12 @@ typedef struct {
     int sbuf_size;
     size_t task_stack_size;
     uint8_t task_priority;
+
+    /* TLS Support */
+#ifdef CONFIG_ESPIRC_SUPPORT_TLS
+    esp_tls_cfg_t tls_cfg;
+    bool tls;
+#endif
 } irc_config_t;
 
 struct irc {
@@ -64,6 +74,10 @@ struct irc {
 
     /* IRC Socket */
     int socket;
+
+#ifdef CONFIG_ESPIRC_SUPPORT_TLS
+    esp_tls_t *tls_ptr;
+#endif
 
     /* IRC Task */
     irc_state_t state;

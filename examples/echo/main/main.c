@@ -14,6 +14,12 @@
 
 #include "espirc.h"
 
+#if defined(CONFIG_ESPIRC_SUPPORT_TLS) && \
+    defined(CONFIG_ESP_TLS_USING_MBEDTLS) && defined(CONFIG_MBEDTLS_CERTIFICATE_BUNDLE)
+#define CA_BUNDLE_API_SUPPORTED 1
+#include "esp_crt_bundle.h"
+#endif
+
 irc_handle_t network;
 
 bool connected = false;
@@ -146,6 +152,14 @@ void app_main(void)
         .nick = CONFIG_EXAMPLE_IRC_NICK,
         .channel = CONFIG_EXAMPLE_IRC_CHANNEL,
         .realname = CONFIG_EXAMPLE_IRC_REALNAME,
+#if CONFIG_ESPIRC_SUPPORT_TLS && CONFIG_EXAMPLE_IRC_SSL
+        .tls = true,
+        .tls_cfg = {
+#ifdef CA_BUNDLE_API_SUPPORTED
+            .crt_bundle_attach = esp_crt_bundle_attach,
+#endif
+        },
+#endif
     };
 
     network = irc_create(config);

@@ -36,6 +36,14 @@ config EXAMPLE_IRC_PORT
 	help
 	  Port the IRC network is listening to.
 
+config EXAMPLE_IRC_SSL
+	bool "SSL/TLS Connection"
+	depends on ESPIRC_SUPPORT_TLS
+	default false
+	help
+	  Enable this if your network requires (or if you want to) a
+	  secure connection.
+
 config EXAMPLE_IRC_PASS
 	string "IRC Network Password"
 	default ""

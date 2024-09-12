@@ -6,16 +6,22 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include <netdb.h>
-#include <sys/socket.h>
 #include <errno.h>
 
+#include "sdkconfig.h"
+
+#include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
 #include "esp_err.h"
 #include "esp_log.h"
 
 #include "espirc.h"
+#include "espirc_socket.h"
+
+#ifdef CONFIG_ESPIRC_SUPPORT_TLS
+#include "esp_tls.h"
+#endif
 
 static const char* TAG = "espirc";
 
@@ -163,7 +169,7 @@ static void irc_task(void* args) {
      * from the network.
      */
     while (client->state >= IRC_STATE_CONNECTING &&
-            (sl = recv(client->socket, client->rbuf, sizeof(client->rbuf)-1, 0))) {
+            (sl = espirc_socket_recv(client, client->rbuf, sizeof(client->rbuf)-1))) {
         if (sl < 0) {
             ESP_LOGE(TAG, "Read socket failed (%d)", errno);
             break;
@@ -263,15 +269,20 @@ irc_handle_t irc_create(irc_config_t config)
     if (!config.realname || (config.realname && strlen(config.realname) == 0))
         config.realname = config.nick;
 
-    client = malloc(sizeof(struct irc));
+#ifdef CONFIG_ESPIRC_SUPPORT_TLS
+    if (config.tls) {
+        config.tls_cfg.addr_family = ESP_TLS_AF_UNSPEC;
+        config.tls_cfg.timeout_ms = INT32_MAX;
+    }
+#endif
+
+    client = calloc(1, sizeof(struct irc));
     if (!client) {
         ESP_LOGE(TAG, "Failed to allocate memory");
         return NULL;
     }
 
     ESP_LOGD(TAG, "Allocated %d bytes", sizeof(client));
-
-    client->running = false;
 
     client->config = config;
 
@@ -303,17 +314,10 @@ esp_err_t irc_destroy(irc_handle_t client)
 
 esp_err_t irc_connect(irc_handle_t client)
 {
-    struct addrinfo hints, *res;
-    int conn;
-
     if (client->running) {
         ESP_LOGE(TAG, "IRC is running");
         return ESP_FAIL;
     }
-
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
 
     if (!client->config.host && !client->config.port) {
         ESP_LOGE(TAG, "Host or port not defined.");
@@ -322,24 +326,8 @@ esp_err_t irc_connect(irc_handle_t client)
 
     ESP_LOGD(TAG, "Host: %s - Port: %s - User: %s - Nick: %s", client->config.host, client->config.port, client->config.user, client->config.nick);
 
-    if (getaddrinfo(client->config.host, client->config.port, &hints, &res) != 0) {
-        ESP_LOGE(TAG, "getaddrinfo failed");
+    if (espirc_socket_connect(client) != ESP_OK)
         return ESP_FAIL;
-    }
-
-    client->socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    if (client->socket < 0) {
-        ESP_LOGE(TAG, "Socket creation failed (%d)", errno);
-        goto res_fail;
-    }
-
-    conn = connect(client->socket, res->ai_addr, res->ai_addrlen);
-    if (conn < 0) {
-        ESP_LOGE(TAG, "Failed to connect (%d)", errno);
-        goto res_fail;
-    }
-
-    freeaddrinfo(res);
 
     ESP_LOGD(TAG, "Socket: %d", client->socket);
 
@@ -357,11 +345,8 @@ esp_err_t irc_connect(irc_handle_t client)
 
     irc_sendraw(client, "USER %s 0 * :%s", client->config.user, client->config.realname);
     irc_sendraw(client, "NICK %s", client->config.nick);
-    return ESP_OK;
 
-res_fail:
-    freeaddrinfo(res);
-    return ESP_FAIL;
+    return ESP_OK;
 }
 
 esp_err_t irc_disconnect(irc_handle_t client)
@@ -369,7 +354,7 @@ esp_err_t irc_disconnect(irc_handle_t client)
     if (client->state >= IRC_STATE_CONNECTING) {
         irc_sendraw(client, "QUIT");
 
-        if (close(client->socket) < 0) {
+        if (espirc_socket_close(client) < 0) {
             ESP_LOGE(TAG, "Failed to close socket (%s)", esp_err_to_name(errno));
             return ESP_FAIL;
         }
@@ -401,12 +386,10 @@ esp_err_t irc_sendraw(irc_handle_t client, char* fmt, ...)
 
     ESP_LOGD(TAG, "<< %s", client->sbuf);
     strcpy(client->sbuf+endofstring, "\r\n");
-    if (write(client->socket, client->sbuf, strlen(client->sbuf)) < 0) {
+    if (espirc_socket_write(client, client->sbuf, strlen(client->sbuf)) < 0) {
         ESP_LOGE(TAG, "Failed to send message (%d)", errno);
         return ESP_ERR_INVALID_ARG;
     }
 
     return ESP_OK;
 }
-
-

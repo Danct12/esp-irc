@@ -1,0 +1,10 @@
+menu "ESPIRC Settings"
+
+config ESPIRC_SUPPORT_TLS
+	bool "Support TLS connection"
+	default n
+	help
+	  Enabling this option enables TLS support for ESPIRC which
+	  might be required for some IRC network.
+
+endmenu
