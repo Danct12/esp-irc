@@ -354,6 +354,10 @@ esp_err_t irc_connect(irc_handle_t client)
         return ESP_FAIL;
     }
 
+    /* If a password is supplied, it must be entered first before registration */
+    if (client->config.pass && strlen(client->config.pass) != 0)
+        irc_sendraw(client, "PASS %s", client->config.pass);
+
     irc_sendraw(client, "USER %s 0 * :%s", client->config.user, client->config.realname);
     irc_sendraw(client, "NICK %s", client->config.nick);
     return ESP_OK;
