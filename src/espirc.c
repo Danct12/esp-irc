@@ -244,7 +244,9 @@ irc_handle_t irc_create(irc_config_t config)
 {
     irc_handle_t client;
 
-    if (!config.host && !config.user && !config.nick) {
+    if ((!config.host || (config.host && strlen(config.host) == 0)) ||
+        (!config.user || (config.user && strlen(config.user) == 0)) ||
+        (!config.nick || (config.nick && strlen(config.nick) == 0))) {
         ESP_LOGE(TAG, "IRC host/user/nick is not defined");
         return NULL;
     }
@@ -255,11 +257,11 @@ irc_handle_t irc_create(irc_config_t config)
     if (!config.task_stack_size)
         config.task_stack_size = 2048;
 
-    if (!config.port)
+    if (!config.port || (config.port && strlen(config.port) == 0))
         config.port = "6667";
 
-    if (!config.realname)
-        config.realname = config.user;
+    if (!config.realname || (config.realname && strlen(config.realname) == 0))
+        config.realname = config.nick;
 
     client = malloc(sizeof(struct irc));
     if (!client) {
