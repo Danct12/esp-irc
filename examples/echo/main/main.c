@@ -88,6 +88,8 @@ static void event_handler(void* arg, esp_event_base_t event_base,
                     irc_message_t* message = (irc_message_t*) event_data;
 
                     if (strncmp(message->verb, "PRIVMSG", 7) == 0 && message->source) {
+                        ESP_LOGI(TAG, "%s in %s sent: \"%s\"",
+                                message->source, message->params[0], message->params[1]);
                         irc_sendraw(network, "PRIVMSG %s :%s sent: %s",
                                 message->params[0], message->source, message->params[1]);
                     }
