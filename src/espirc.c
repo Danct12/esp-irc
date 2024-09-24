@@ -263,8 +263,8 @@ irc_handle_t irc_create(irc_config_t config)
     if (!config.task_stack_size)
         config.task_stack_size = 2048;
 
-    if (!config.port || (config.port && strlen(config.port) == 0))
-        config.port = "6667";
+    if (!config.port)
+        config.port = 6667;
 
     if (!config.realname || (config.realname && strlen(config.realname) == 0))
         config.realname = config.nick;
@@ -324,7 +324,7 @@ esp_err_t irc_connect(irc_handle_t client)
         return ESP_FAIL;
     }
 
-    ESP_LOGD(TAG, "Host: %s - Port: %s - User: %s - Nick: %s", client->config.host, client->config.port, client->config.user, client->config.nick);
+    ESP_LOGD(TAG, "Host: %s - Port: %d - User: %s - Nick: %s", client->config.host, client->config.port, client->config.user, client->config.nick);
 
     if (espirc_socket_connect(client) != ESP_OK)
         return ESP_FAIL;

@@ -47,7 +47,7 @@ typedef struct {
     const char* user;
     const char* pass;
     const char* nick;
-    const char* port;
+    uint16_t port;
 
     /* Additional Config */
     const char* realname;

@@ -22,6 +22,7 @@ static const char* TAG = "espirc_socket";
 esp_err_t espirc_socket_connect(irc_handle_t client)
 {
     struct addrinfo hints, *res;
+    char port[6];
 
     if (!client->config.host && !client->config.port)
         return ESP_ERR_INVALID_ARG;
@@ -30,8 +31,6 @@ esp_err_t espirc_socket_connect(irc_handle_t client)
         return ESP_ERR_INVALID_STATE;
 
 #ifdef CONFIG_ESPIRC_SUPPORT_TLS
-    int port;
-
     if (client->tls_ptr)
         return ESP_ERR_INVALID_STATE;
 
@@ -40,20 +39,22 @@ esp_err_t espirc_socket_connect(irc_handle_t client)
         if (!client->tls_ptr)
             return ESP_ERR_NO_MEM;
 
-        port = atoi(client->config.port);
-        if (esp_tls_conn_new_sync(client->config.host, strlen(client->config.host), port,
-                &client->config.tls_cfg, client->tls_ptr) < 0)
+        if (esp_tls_conn_new_sync(client->config.host, strlen(client->config.host),
+            client->config.port, &client->config.tls_cfg, client->tls_ptr) < 0)
             goto esp_tls_failure;
 
         esp_tls_get_conn_sockfd(client->tls_ptr, &client->socket);
     } else
 #endif
     {
+        if (sprintf(port, "%d", client->config.port) < 0)
+            return ESP_ERR_INVALID_ARG;
+
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_UNSPEC;
         hints.ai_socktype = SOCK_STREAM;
 
-        if (getaddrinfo(client->config.host, client->config.port, &hints, &res) != 0) {
+        if (getaddrinfo(client->config.host, port, &hints, &res) != 0) {
             ESP_LOGE(TAG, "getaddrinfo failed");
             return ESP_FAIL;
         }

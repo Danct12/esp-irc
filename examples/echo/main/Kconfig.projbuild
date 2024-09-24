@@ -31,7 +31,7 @@ config EXAMPLE_IRC_SERVER
 	  The IRC network the example will connect to.
 
 config EXAMPLE_IRC_PORT
-	string "IRC Port"
+	int "IRC Port"
 	default "6667"
 	help
 	  Port the IRC network is listening to.
