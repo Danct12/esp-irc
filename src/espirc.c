@@ -126,7 +126,7 @@ static irc_message_t* irc_parse_message(char *message) {
             token = strtok(NULL, "");
             if (!token) goto trailing_end;
             msgstruct->params[i] = realloc(msgstruct->params[i],
-                    sizeof(msgstruct->params[i]) + (strlen(token) + 2) * sizeof(char*));
+                    strlen(msgstruct->params[i]) + strlen(token) + 2);
             strcat(msgstruct->params[i], " ");
             strcat(msgstruct->params[i], token);
         } else {
