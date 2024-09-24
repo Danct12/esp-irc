@@ -57,7 +57,6 @@ static void event_handler(void* arg, esp_event_base_t event_base,
                     ESP_LOGI(TAG, "Connected to %s (BSSID: "MACSTR", Channel: %d)", event->ssid,
                         MAC2STR(event->bssid), event->channel);
                     wifi_retry = 0;
-		    connected = true;
                 }
                 break;
             default:
@@ -67,7 +66,6 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         switch(event_id) {
             case IP_EVENT_STA_GOT_IP:
                 {
-                    wifi_retry = 0;
                     connected = true;
                 }
                 break;
