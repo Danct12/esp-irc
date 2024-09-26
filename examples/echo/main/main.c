@@ -86,12 +86,41 @@ static void event_handler(void* arg, esp_event_base_t event_base,
             case IRC_EVENT_NEW_MESSAGE:
                 {
                     irc_message_t* message = (irc_message_t*) event_data;
+                    char *nick, *host, *source, *target, *pch;
 
                     if (strncmp(message->verb, "PRIVMSG", 7) == 0 && message->source) {
-                        ESP_LOGI(TAG, "%s in %s sent: \"%s\"",
-                                message->source, message->params[0], message->params[1]);
-                        irc_sendraw(network, "PRIVMSG %s :%s sent: %s",
-                                message->params[0], message->source, message->params[1]);
+                        pch = (char*) memchr(message->source, '!', strlen(message->source));
+                        if (!pch) break;
+
+                        /* Split nick and host */
+                        source = message->source;
+                        source[pch-source] = '\0';
+                        nick = source;
+                        host = source+(pch-source+1);
+
+                        target = message->params[0];
+
+                        if (strcmp(nick, target) == 0) break;
+
+                        /*
+                         * Check if the target starts with '#' (0x23), '&' (0x26).
+                         *
+                         * If target doesn't start with these characters, it's
+                         * assumed to be a private message and relay them to sender.
+                         */
+                        switch (target[0]) {
+                            case '#':
+                            case '&':
+                                break;
+                            default:
+                                target = nick;
+                                break;
+                        }
+
+                        ESP_LOGI(TAG, "%s (%s) in %s sent: \"%s\"",
+                                nick, host, message->params[0], message->params[1]);
+                        irc_sendraw(network, "PRIVMSG %s :%s (%s) sent: %s",
+                                target, nick, host, message->params[1]);
                     }
                 }
                 break;
