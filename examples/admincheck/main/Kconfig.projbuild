@@ -1,0 +1,92 @@
+menu "Example Configuration"
+
+menu "Wi-Fi Settings"
+
+config EXAMPLE_WIFI_SSID
+	string "WiFi SSID"
+	default "myssid"
+	help
+	  SSID (network name) for the example to connect to.
+
+config EXAMPLE_WIFI_PASSWORD
+	string "WiFi Password"
+	default "mypassword"
+	help
+	  WiFi password (WPA or WPA2) for the example to use.
+
+config EXAMPLE_WIFI_MAXRETRY
+	int "WiFi Maximum Retries"
+	default 20
+	help
+	  Maximum retries for STA connection
+
+endmenu # Wi-Fi Settings
+
+menu "IRC Settings"
+
+config EXAMPLE_IRC_SERVER
+	string "IRC Server"
+	default ""
+	help
+	  The IRC network the example will connect to.
+
+config EXAMPLE_IRC_PORT
+	int "IRC Port"
+	default "6667"
+	help
+	  Port the IRC network is listening to.
+
+config EXAMPLE_IRC_SSL
+	bool "SSL/TLS Connection"
+	depends on ESPIRC_SUPPORT_TLS
+	default false
+	help
+	  Enable this if your network requires (or if you want to) a
+	  secure connection.
+
+config EXAMPLE_IRC_PASS
+	string "IRC Network Password"
+	default ""
+	help
+	  Password for IRC network (can be left blank if there's none)
+
+	  This is not your NickServ password.
+
+config EXAMPLE_IRC_USER
+	string "IRC User"
+	default "espircadmin"
+	help
+	  IRC username (this is not your NickServ ident)
+
+config EXAMPLE_IRC_NICK
+	string "IRC Nick"
+	default "espircadmin"
+	help
+	  IRC nickname
+
+config EXAMPLE_IRC_REALNAME
+	string "IRC Real Name"
+	default "ESP32 Admin Check Bot"
+	help
+	  Real name that people would see when they WHOIS the bot.
+
+config EXAMPLE_IRC_CHANNEL
+	string "IRC Channel"
+	default ""
+	help
+	  IRC channel to join after registration completion.
+
+	  This can be blank if you do not want your bot to join a channel.
+
+config EXAMPLE_IRC_ADMIN_HOSTNAME
+	string "Admin hostname"
+	default ""
+	help
+	  This will be the hostname that you appears on the IRC network.
+
+	  For example, if your ident is `~example@user/example` then you'll
+	  set this to `user/example`.
+
+endmenu # IRC Settings
+
+endmenu # Example Configuration
