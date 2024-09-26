@@ -106,7 +106,7 @@ static irc_message_t* irc_parse_message(char *message) {
     msgstruct->colon = 0;
 
     if (message[0] == ':') {
-        token = strtok(message, " :");
+        token = strtok(message+1, " ");
         if (token) msgstruct->source = token;
     }
 

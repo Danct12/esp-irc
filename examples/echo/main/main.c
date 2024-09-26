@@ -65,9 +65,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
     } else if (event_base == IP_EVENT) {
         switch(event_id) {
             case IP_EVENT_STA_GOT_IP:
-                {
-                    connected = true;
-                }
+                connected = true;
                 break;
             default:
                 break;
