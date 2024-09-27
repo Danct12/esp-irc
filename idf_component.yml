@@ -2,3 +2,11 @@ version: "0.1.0"
 license: "GPL-3.0-only"
 description: "IRC Library for ESP-IDF"
 url: "https://github.com/Danct12/esp-irc"
+
+tags:
+  - chat
+  - irc
+  - rfc1459
+
+dependencies:
+  idf: ">=5.2"
