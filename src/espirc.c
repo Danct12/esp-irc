@@ -94,8 +94,8 @@ static esp_err_t irc_state_set(irc_handle_t client, irc_state_t state)
 static irc_message_t* irc_parse_message(char *message) {
     irc_message_t* msgstruct;
     char *token;
-    int i;
-    i = 0;
+    void *alloc_prev;
+    int i = 0;
 
     msgstruct = malloc(sizeof(irc_message_t));
     if (!msgstruct) return NULL;
@@ -118,15 +118,33 @@ static irc_message_t* irc_parse_message(char *message) {
     while (token != NULL) {
         token = strtok(NULL, " ");
         if (!token) break;
+
+        alloc_prev = msgstruct->params;
         msgstruct->params = realloc(msgstruct->params, (i + 1) * sizeof(char*));
+        if (!msgstruct->params) {
+            free(alloc_prev);
+            goto msgstruct_alloc_fail;
+        }
+
         if (token[0] == ':') {
             msgstruct->colon = 1;
+
             msgstruct->params[i] = malloc((strlen(token)+1)*sizeof(char*));
+            if (!msgstruct->params[i])
+                goto msgstruct_alloc_fail_params;
+
             strcpy(msgstruct->params[i], token+1);
             token = strtok(NULL, "");
             if (!token) goto trailing_end;
+
+            alloc_prev = msgstruct->params[i];
             msgstruct->params[i] = realloc(msgstruct->params[i],
                     strlen(msgstruct->params[i]) + strlen(token) + 2);
+            if (!msgstruct->params[i]) {
+                free(alloc_prev);
+                goto msgstruct_alloc_fail_params;
+            }
+
             strcat(msgstruct->params[i], " ");
             strcat(msgstruct->params[i], token);
         } else {
@@ -139,6 +157,14 @@ trailing_end:
     msgstruct->params_count = i;
 
     return msgstruct;
+
+msgstruct_alloc_fail:
+    free(msgstruct);
+    return NULL;
+
+msgstruct_alloc_fail_params:
+    free(msgstruct->params);
+    goto msgstruct_alloc_fail;
 }
 
 static void irc_parse_free(irc_message_t* message)
@@ -151,13 +177,9 @@ static void irc_parse_free(irc_message_t* message)
 static void irc_task(void* args) {
     irc_handle_t client = (irc_handle_t) args;
     irc_message_t *msg;
-    char *rbufcpy, *split, *splitptr;
-    int rbuf_count, offset;
+    char *rbufcpy = NULL, *rbufcpy_prev = NULL, *split, *splitptr;
+    int rbuf_count = 0, offset = 0;
     int sl;
-
-    rbufcpy = NULL;
-    offset = 0;
-    rbuf_count = 0;
 
     ESP_LOGD(TAG, "Task started.");
     ESP_LOGD(TAG, "Socket: %d", client->socket);
@@ -180,9 +202,10 @@ static void irc_task(void* args) {
         rbuf_count += sl;
 
         ESP_LOGD(TAG, "Bytes received: %d - Count: %d", sl, rbuf_count);
-        rbufcpy = realloc(rbufcpy, 1 + rbuf_count * sizeof(char));
+        rbufcpy = realloc(rbufcpy_prev = rbufcpy, 1 + rbuf_count * sizeof(char));
         if (!rbufcpy) {
             ESP_LOGE(TAG, "Failed to realloc mem");
+            free(rbufcpy_prev);
             break;
         }
 
@@ -237,8 +260,7 @@ static void irc_task(void* args) {
         offset = 0;
     }
 
-    if (rbufcpy)
-        free(rbufcpy);
+    free(rbufcpy);
 
     client->running = false;
 
