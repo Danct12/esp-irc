@@ -1,4 +1,4 @@
-version: "0.1.0"
+version: "0.1.1"
 license: "GPL-3.0-only"
 description: "IRC Library for ESP-IDF"
 url: "https://github.com/Danct12/esp-irc"
